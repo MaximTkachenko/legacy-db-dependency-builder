@@ -1,1 +1,1 @@
-# legacy-db-dependency-searcher
+# legacy-db-dependency-builder
