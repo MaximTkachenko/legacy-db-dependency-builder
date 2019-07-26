@@ -19,13 +19,13 @@ namespace DbDependencyBuilder
         [Option('c', "config", Required = true, HelpText = "Path to json configuration file.")]
         public string ConfigPath { get; set; }
 
-        [Option('n', "names", Separator = ',', Required = false, HelpText = "Root objects.")]
+        [Option('n', "names", Separator = ',', Required = false, HelpText = "Root sql objects.")]
         public IEnumerable<string> Names { get; set; }
 
-        [Option('t', "types", Separator = ',', Required = false, HelpText = "Whitelist filter for sql object type. It works only together with fragment.")]
+        [Option('t', "types", Separator = ',', Required = false, HelpText = "Whitelist filter for sql object type of root. It works only together with fragment.")]
         public IEnumerable<RefObjectType> TypesToSearch { get; set; }
 
-        [Option('f', "fragment", Required = false, HelpText = "Fragment of sql object name.")]
+        [Option('f', "fragment", Required = false, HelpText = "Fragment of root sql object name.")]
         public string Fragment { get; set; }
     }
 
@@ -56,6 +56,7 @@ namespace DbDependencyBuilder
                     {
                         Process(o.Names.Select(t => new RefObject
                         {
+                            //todo check db prefix
                             Name = t.Split('.')[1],
                             Type = RefObjectType.Tbl,
                             Db = t.Split('.')[0]
