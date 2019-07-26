@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 namespace DbDependencyBuilder
 {
     //todo add build azure pipeline and pipeline to publish as nuget, then install as dotnet global tool
+    //todo marking the same node in tree
     //todo tooltip with matched fragment
     //todo mark db objects without usage (no final csarp or etl node)
     //todo colors for different types and legend
