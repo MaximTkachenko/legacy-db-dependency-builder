@@ -9,6 +9,19 @@ namespace DbDependencyBuilder
 {
     public class Searcher
     {
+        private static readonly Dictionary<RefObjectType, string> RefObjectNames;
+
+        static Searcher()
+        {
+            RefObjectNames = new Dictionary<RefObjectType, string>();
+            foreach (RefObjectType t in Enum.GetValues(typeof(RefObjectType)))
+            {
+                var memInfo = typeof(RefObjectType).GetMember(t.ToString());
+                var attributes = memInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
+                RefObjectNames[t] = ((DescriptionAttribute) attributes[0]).Description;
+            }
+        }
+
         private static readonly Dictionary<RefObjectType, RefObjectType[]> SqlSearchRules =
             new Dictionary<RefObjectType, RefObjectType[]>
             {
@@ -23,17 +36,17 @@ namespace DbDependencyBuilder
         private readonly Dictionary<string, string> _etl;
         private readonly Dictionary<string, Dictionary<string, string>> _csharp;
 
-        private readonly bool _dbSerach;
-        private readonly bool _etlSerach;
-        private readonly bool _csharpSerach;
+        private readonly bool _dbSearch;
+        private readonly bool _etlSearch;
+        private readonly bool _csharpSearch;
 
         public Searcher(SearchConfig config)
         {
-            _dbSerach = config.DbPath != null && config.DbPath.Keys.Count > 0;
-            _etlSerach = !string.IsNullOrEmpty(config.EtlPath);
-            _csharpSerach = !string.IsNullOrEmpty(config.CsharpPath);
+            _dbSearch = config.DbPath != null && config.DbPath.Keys.Count > 0;
+            _etlSearch = !string.IsNullOrEmpty(config.EtlPath);
+            _csharpSearch = !string.IsNullOrEmpty(config.CsharpPath);
 
-            if (_dbSerach)
+            if (_dbSearch)
             {
                 _sql = new Dictionary<string, Dictionary<RefObjectType, List<(string Name, string Script)>>>();
                 foreach (var root in config.DbPath)
@@ -41,7 +54,7 @@ namespace DbDependencyBuilder
                     _sql[root.Key] = new Dictionary<RefObjectType, List<(string Name, string Script)>>();
                     foreach (RefObjectType t in Enum.GetValues(typeof(RefObjectType)))
                     {
-                        var folder = $@"{root.Value}\{GetName(t)}";
+                        var folder = $@"{root.Value}\{RefObjectNames[t]}";
                         if (!Directory.Exists(folder))
                         {
                             continue;
@@ -53,19 +66,19 @@ namespace DbDependencyBuilder
                 }
             }
 
-            if (_etlSerach)
+            if (_etlSearch)
             {
                 _etl = Directory.GetFiles(config.EtlPath, "*.dtsx").ToDictionary(x => Path.GetFileNameWithoutExtension(x), x => File.ReadAllText(x));
             }
 
-            if (_csharpSerach)
+            if (_csharpSearch)
             {
                 _csharp = new Dictionary<string, Dictionary<string, string>>();
                 foreach (var sln in Directory.GetFiles(config.CsharpPath, "*.sln", SearchOption.AllDirectories))
                 {
                     _csharp[Path.GetFileNameWithoutExtension(sln)] = Directory.GetFiles(Path.GetDirectoryName(sln),
                             "*.*", SearchOption.AllDirectories)
-                        .Where(s => s.EndsWith(".cs") || s.EndsWith(".edmx"))
+                        .Where(s => s.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) || s.EndsWith(".edmx", StringComparison.OrdinalIgnoreCase))
                         .ToDictionary(x => x, x => File.ReadAllText(x));
                 }
             }
@@ -76,7 +89,7 @@ namespace DbDependencyBuilder
             var result = new List<RefObject>();
             var sqlRegex = new Regex($@"[ .\t[]{{1}}{obj.Name}[ \]\t]{{1}}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
-            if (_dbSerach)
+            if (_dbSearch)
             {
                 foreach (var db in _sql)
                 {
@@ -103,12 +116,12 @@ namespace DbDependencyBuilder
 
             if (obj.Type != RefObjectType.Cs || obj.Type != RefObjectType.Etl)
             {
-                if (_etlSerach)
+                if (_etlSearch)
                 {
                     result.AddRange(_etl.Where(x => sqlRegex.IsMatch(x.Value)).Select(x => new RefObject {Type = RefObjectType.Etl, Name = x.Key}));
                 }
 
-                if (_csharpSerach)
+                if (_csharpSearch)
                 {
                     var csharpMapRegex = $"\"{obj.Name}\""; //table mapping or exec sp without parameters
                     var csharpExecRegex1 = $"exec {obj.Name}"; //exec sp
@@ -127,13 +140,6 @@ namespace DbDependencyBuilder
             }
 
             return result.GroupBy(x => new { x.Name, x.Type, x.Db }).Select(group => group.First()).ToList();
-        }
-
-        private static string GetName(RefObjectType t)
-        {
-            var memInfo = typeof(RefObjectType).GetMember(t.ToString());
-            var attributes = memInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
-            return ((DescriptionAttribute)attributes[0]).Description;
         }
     }
 }
