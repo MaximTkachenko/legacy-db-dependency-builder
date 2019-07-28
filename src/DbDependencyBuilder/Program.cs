@@ -92,6 +92,7 @@ namespace DbDependencyBuilder
 
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             Console.WriteLine($" done {sw.Elapsed}");
+            Console.ResetColor();
 
             Console.Write("vizualizing...");
             sw = Stopwatch.StartNew();
