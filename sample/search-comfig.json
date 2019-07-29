@@ -1,6 +1,0 @@
-{
-	"db": {
-		"main": "C:\\code\\repos\\legacy-db-dependency-builder\\sample\\sample-db\\dbo"
-	},
-	"csharp": "C:\\code\\repos\\legacy-db-dependency-builder\\sample\\sample-app"
-}
