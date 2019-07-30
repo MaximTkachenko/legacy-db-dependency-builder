@@ -5,3 +5,5 @@
 ```
 dotnet DbDependencyBuilder.dll -c C:\code\repos\legacy-db-dependency-builder\sample\search-config.json -n main.Person
 ```
+
+Build dependency map for particular SQL objects (tables etc.)
