@@ -22,6 +22,9 @@ namespace DbDependencyBuilder
 
         [Option('f', "fragment", Required = false, HelpText = "Fragment of root sql object name.")]
         public string Fragment { get; set; }
+
+        [Option('o', "output", Required = false, HelpText = "Directory for output files.")]
+        public string OutputPath { get; set; }
     }
 
     class Program
@@ -47,33 +50,34 @@ namespace DbDependencyBuilder
                         return;
                     }
 
+                    if (config.DbPath == null || config.DbPath.Count == 0)
+                    {
+                        Console.WriteLine("Provide at least one database in config file.");
+                        return;
+                    }
+
+                    _searcher = new Searcher(config);
+
                     if (o.Names != null && o.Names.Any())
                     {
-                        Process(o.Names.Select(t => new RefObject
-                        {
-                            //todo check db prefix
-                            Name = t.Split('.')[1],
-                            Type = RefObjectType.Tbl,
-                            Db = t.Split('.')[0]
-                        }).ToList(), config);
+                        var objects = o.Names.Select(x =>_searcher.FindObjects(x)).SelectMany(x => x).ToList();
+                        Process(objects, o);
                         return;
                     }
 
                     if (!string.IsNullOrEmpty(o.Fragment))
                     {
-                        //todo find sql object
-                        //todo find its usages
+                        var objects = _searcher.FindObjects(o.Fragment, o.TypesToSearch);
+                        Process(objects, o);
                     }
                 });
         }
 
-        static void Process(List<RefObject> objects, SearchConfig config)
+        static void Process(List<RefObject> roots, Options options)
         {
             Console.Write("loading...");
             var sw = Stopwatch.StartNew();
-
-            _searcher = new Searcher(config);
-
+            
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             Console.WriteLine($" done {sw.Elapsed}");
             Console.ResetColor();
@@ -81,7 +85,7 @@ namespace DbDependencyBuilder
             Console.Write("searching...");
             sw = Stopwatch.StartNew();
 
-            var result = FindUsages(objects);
+            var result = FindUsages(roots);
 
             Console.ForegroundColor = ConsoleColor.DarkGreen;
             Console.WriteLine($" done {sw.Elapsed}");
@@ -90,9 +94,9 @@ namespace DbDependencyBuilder
             Console.Write("vizualizing...");
             sw = Stopwatch.StartNew();
 
-            var visualizer = new Visualizer();
-            string treeFile = visualizer.RenderTree(result);
-            string graphFile = visualizer.RenderGraph(result);
+            var visualizer = new Visualizer(result, options.OutputPath);
+            string treeFile = visualizer.BuildTree();
+            string graphFile = visualizer.BuildGraph();
 
             Console.WriteLine($" done {sw.Elapsed}");
             Console.ResetColor();
@@ -130,7 +134,7 @@ namespace DbDependencyBuilder
                 () => new List<RefObject>(),
                 (obj, state, local) =>
                 {
-                    var usages = _searcher.Find(obj);
+                    var usages = _searcher.FindUsages(obj);
                     obj.Usages = usages;
                     local.AddRange(usages);
                     return local;

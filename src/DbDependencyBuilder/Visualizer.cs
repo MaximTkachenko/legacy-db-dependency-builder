@@ -8,17 +8,26 @@ namespace DbDependencyBuilder
 {
     public class Visualizer
     {
-        private readonly long _ts = (long) (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+        private readonly long _ts;
+        private readonly (List<RefObject> Objects, int MaxChildren, int Nesting) _data;
+        private readonly string _output;
 
-        public string RenderTree((List<RefObject> Objects, int MaxChildren, int Nesting) data)
+        public Visualizer((List<RefObject> Objects, int MaxChildren, int Nesting) data, string output)
         {
-            var height = data.MaxChildren * 100;
-            var width = data.Nesting * 400;
+            _ts = (long) (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
+            _data = data;
+            _output = output ?? Directory.GetCurrentDirectory();
+        }
 
-            var tree = new[] { new RefObject { Usages = data.Objects } };
-            var tables = GetTitle(data.Objects);
+        public string BuildTree()
+        {
+            var height = _data.MaxChildren * 100;
+            var width = _data.Nesting * 400;
 
-            var markup = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "templates", "tree.html"))
+            var tree = new[] { new RefObject { Usages = _data.Objects } };
+            var tables = GetTitle(_data.Objects);
+
+            var markup = File.ReadAllText(Path.Combine(_output, "templates", "tree.html"))
                 .Replace("%title%", tables)
                 .Replace("%data%", JsonConvert.SerializeObject(tree))
                 .Replace("%height%", height.ToString())
@@ -29,14 +38,14 @@ namespace DbDependencyBuilder
             return file;
         }
 
-        public string RenderGraph((List<RefObject> Objects, int MaxChildren, int Nesting) data)
+        public string BuildGraph()
         {
             var height = 1000;
             var width = 1000;
 
             var nodes = new List<Node>();
             var links = new List<Link>();
-            var toCheck = data.Objects;
+            var toCheck = _data.Objects;
             while (toCheck.Count > 0)
             {
                 var nextToCheck = new List<RefObject>();
@@ -55,9 +64,9 @@ namespace DbDependencyBuilder
                 Nodes = nodes.GroupBy(customer => customer.Id.ToUpper()).Select(group => group.First()).ToList(),
                 Links = links
             };
-            var tables = GetTitle(data.Objects);
+            var tables = GetTitle(_data.Objects);
 
-            var markup = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "templates", "graph.html"))
+            var markup = File.ReadAllText(Path.Combine(_output, "templates", "graph.html"))
                 .Replace("%title%", tables)
                 .Replace("%data%", JsonConvert.SerializeObject(graph))
                 .Replace("%height%", height.ToString())

@@ -84,7 +84,7 @@ namespace DbDependencyBuilder
             }
         }
 
-        public List<RefObject> Find(RefObject obj)
+        public List<RefObject> FindUsages(RefObject obj)
         {
             var result = new List<RefObject>();
             var sqlRegex = new Regex($@"[ .\t[]{{1}}{obj.Name}[ \]\t]{{1}}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
@@ -140,6 +140,16 @@ namespace DbDependencyBuilder
             }
 
             return result.GroupBy(x => new { x.Name, x.Type, x.Db }).Select(group => group.First()).ToList();
+        }
+
+        public List<RefObject> FindObjects(string fragment, IEnumerable<RefObjectType> types)
+        {
+            return null;
+        }
+
+        public List<RefObject> FindObjects(string fullname)
+        {
+            return null;
         }
     }
 }
