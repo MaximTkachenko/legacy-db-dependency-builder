@@ -18,7 +18,7 @@ namespace DbDependencyBuilder
             var tree = new[] { new RefObject { Usages = data.Objects } };
             var tables = GetTitle(data.Objects);
 
-            var markup = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "tree_template.html"))
+            var markup = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "templates", "tree.html"))
                 .Replace("%title%", tables)
                 .Replace("%data%", JsonConvert.SerializeObject(tree))
                 .Replace("%height%", height.ToString())
@@ -57,7 +57,7 @@ namespace DbDependencyBuilder
             };
             var tables = GetTitle(data.Objects);
 
-            var markup = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "graph_template.html"))
+            var markup = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "templates", "graph.html"))
                 .Replace("%title%", tables)
                 .Replace("%data%", JsonConvert.SerializeObject(graph))
                 .Replace("%height%", height.ToString())

@@ -11,10 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="graph_template.html">
+    <Content Include="templates\graph.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="tree_template.html">
+    <Content Include="templates\tree.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
