@@ -144,11 +144,25 @@ namespace DbDependencyBuilder
 
         public List<RefObject> FindObjects(string fragment, IEnumerable<RefObjectType> types)
         {
+            var result = new List<RefObject>();
+            if (!_dbSearch)
+            {
+                return new List<RefObject>();
+            }
+
+            //todo
             return null;
         }
 
         public List<RefObject> FindObjects(string fullname)
         {
+            var result = new List<RefObject>();
+            if (!_dbSearch)
+            {
+                return new List<RefObject>();
+            }
+
+            //todo
             return null;
         }
     }
