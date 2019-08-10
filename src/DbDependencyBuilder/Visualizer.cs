@@ -20,6 +20,7 @@ namespace DbDependencyBuilder
             _ts = (long) (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             _data = data;
             _output = output;
+
             _title = string.Join('_', names);
             foreach (char c in Invalid)
             {

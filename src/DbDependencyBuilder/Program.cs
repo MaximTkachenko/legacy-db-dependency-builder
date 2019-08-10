@@ -17,7 +17,7 @@ namespace DbDependencyBuilder
         [Option('n', "names", Separator = ',', Required = true, HelpText = " Comma separated root sql objects. Provide fragment of name or full name.")]
         public IEnumerable<string> Names { get; set; }
 
-        [Option('t', "types", Separator = ',', Required = false, HelpText = "Whitelist filter for sql object type of root. Possible values: Tbl (table), syn (synonym), Sp (stored procedure), Fun (function), V (view).")]
+        [Option('t', "types", Separator = ',', Required = false, HelpText = "Filter for sql object type of root. Possible values: Tbl (table), syn (synonym), Sp (stored procedure), Fun (function), V (view).")]
         public IEnumerable<RefObjectType> TypesToSearch { get; set; } 
             = new [] { RefObjectType.Tbl, RefObjectType.Syn, RefObjectType.Sp, RefObjectType.Fun, RefObjectType.V };
 
@@ -106,7 +106,7 @@ namespace DbDependencyBuilder
             sw.Stop();
             Console.WriteLine($" done {sw.Elapsed}");
 
-            Console.Write("vizualizing...");
+            Console.Write("visualizing...");
             sw = Stopwatch.StartNew();
 
             var visualizer = new Visualizer(result, options.OutputPath, options.Names);
