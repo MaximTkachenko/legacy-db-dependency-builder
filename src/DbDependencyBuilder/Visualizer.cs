@@ -16,7 +16,7 @@ namespace DbDependencyBuilder
         {
             _ts = (long) (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             _data = data;
-            _output = output ?? Directory.GetCurrentDirectory();
+            _output = output;
         }
 
         public string BuildTree()

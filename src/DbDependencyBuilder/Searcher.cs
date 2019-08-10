@@ -142,28 +142,30 @@ namespace DbDependencyBuilder
             return result.GroupBy(x => new { x.Name, x.Type, x.Db }).Select(group => group.First()).ToList();
         }
 
-        public List<RefObject> FindObjects(string fragment, IEnumerable<RefObjectType> types)
+        public List<RefObject> FindRoots(string[] names, RefObjectType[] types)
         {
             var result = new List<RefObject>();
-            if (!_dbSearch)
+            if (_dbSearch)
             {
-                return new List<RefObject>();
+                foreach (var db in _sql)
+                {
+                    foreach (var t in types)
+                    {
+                        if (!db.Value.TryGetValue(t, out var scripts))
+                        {
+                            continue;
+                        }
+
+                        foreach (var name in names)
+                        {
+                            result.AddRange(scripts.Where(x => x.Name.Contains(name, StringComparison.InvariantCultureIgnoreCase))
+                                .Select(x => new RefObject { Db = db.Key, Type = t, Name = x.Name }));
+                        }
+                    }
+                }
             }
 
-            //todo
-            return null;
-        }
-
-        public List<RefObject> FindObjects(string fullname)
-        {
-            var result = new List<RefObject>();
-            if (!_dbSearch)
-            {
-                return new List<RefObject>();
-            }
-
-            //todo
-            return null;
+            return result;
         }
     }
 }

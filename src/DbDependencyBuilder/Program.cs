@@ -14,17 +14,18 @@ namespace DbDependencyBuilder
         [Option('c', "config", Required = true, HelpText = "Path to json configuration file.")]
         public string ConfigPath { get; set; }
 
-        [Option('n', "names", Separator = ',', Required = false, HelpText = "Root sql objects.")]
+        [Option('n', "names", Separator = ',', Required = true, HelpText = " Comma separated root sql objects. Provide fragment of name or full name.")]
         public IEnumerable<string> Names { get; set; }
 
-        [Option('t', "types", Separator = ',', Required = false, HelpText = "Whitelist filter for sql object type of root. It works only together with fragment.")]
-        public IEnumerable<RefObjectType> TypesToSearch { get; set; }
+        [Option('t', "types", Separator = ',', Required = false, HelpText = "Whitelist filter for sql object type of root. Possible values: tbl (table), syn (synonym), sp (stored procedure), fun (function), v (view).")]
+        public IEnumerable<RefObjectType> TypesToSearch { get; set; } 
+            = new [] { RefObjectType.Tbl, RefObjectType.Syn, RefObjectType.Sp, RefObjectType.Fun, RefObjectType.V };
 
-        [Option('f', "fragment", Required = false, HelpText = "Fragment of root sql object name.")]
-        public string Fragment { get; set; }
-
-        [Option('o', "output", Required = false, HelpText = "Directory for output files.")]
+        [Option('o', "output", Required = true, HelpText = "Directory for output files.")]
         public string OutputPath { get; set; }
+
+        //todo
+        public bool ExactNameCoincidence { get; set; }
     }
 
     class Program
@@ -33,22 +34,31 @@ namespace DbDependencyBuilder
 
         static void Main(string[] args)
         {
+            //Process(new Options
+            //{
+            //    Names = new []{ "Person" },
+            //    OutputPath = @"C:\code\repos\legacy-db-dependency-builder\src\DbDependencyBuilder\bin\Debug\netcoreapp2.2",
+            //    TypesToSearch = new []{ RefObjectType.Tbl}
+            //}, new SearchConfig
+            //{
+            //    DbPath = new Dictionary<string, string>
+            //    {
+            //        {"main", @"C:\code\repos\legacy-db-dependency-builder\sample\sample-db\dbo" }
+            //    },
+            //    CsharpPath = @"C:\code\repos\legacy-db-dependency-builder\sample\sample-app"
+            //});
+            //return;
+
             Parser.Default.ParseArguments<Options>(args)
-                .WithParsed(o =>
+                .WithParsed(options =>
                 {
-                    if (!File.Exists(o.ConfigPath))
+                    if (!File.Exists(options.ConfigPath))
                     {
                         Console.WriteLine("Invalid path for json configuration file.");
                         return;
                     }
 
-                    var config = JsonConvert.DeserializeObject<SearchConfig>(File.ReadAllText(o.ConfigPath));
-
-                    if ((o.Names == null || !o.Names.Any()) && string.IsNullOrEmpty(o.Fragment))
-                    {
-                        Console.WriteLine("Provide --names or --fragment.");
-                        return;
-                    }
+                    var config = JsonConvert.DeserializeObject<SearchConfig>(File.ReadAllText(options.ConfigPath));
 
                     if (config.DbPath == null || config.DbPath.Count == 0)
                     {
@@ -56,40 +66,45 @@ namespace DbDependencyBuilder
                         return;
                     }
 
-                    _searcher = new Searcher(config);
-
-                    if (o.Names != null && o.Names.Any())
-                    {
-                        var objects = o.Names.Select(x =>_searcher.FindObjects(x)).SelectMany(x => x).ToList();
-                        Process(objects, o);
-                        return;
-                    }
-
-                    if (!string.IsNullOrEmpty(o.Fragment))
-                    {
-                        var objects = _searcher.FindObjects(o.Fragment, o.TypesToSearch);
-                        Process(objects, o);
-                    }
+                    Process(options, config);
                 });
         }
 
-        static void Process(List<RefObject> roots, Options options)
+        static void Process(Options options, SearchConfig config)
         {
             Console.Write("loading...");
             var sw = Stopwatch.StartNew();
-            
-            Console.ForegroundColor = ConsoleColor.DarkGreen;
-            Console.WriteLine($" done {sw.Elapsed}");
-            Console.ResetColor();
 
-            Console.Write("searching...");
+            _searcher = new Searcher(config);
+
+            sw.Stop();
+            Console.WriteLine($" done {sw.Elapsed}");
+
+            Console.Write("searching for roots...");
             sw = Stopwatch.StartNew();
 
-            var result = FindUsages(roots);
+            var objects = _searcher.FindRoots(options.Names.ToArray(), options.TypesToSearch.ToArray());
 
-            Console.ForegroundColor = ConsoleColor.DarkGreen;
+            if (objects.Count == 0)
+            {
+                Console.WriteLine("no objects found");
+                return;
+            }
+
+            sw.Stop();
+            Console.WriteLine($" done {sw.Elapsed}, found {objects.Count}:");
+            foreach (var obj in objects)
+            {
+                Console.WriteLine($"- {obj.Db}.{obj.Name} {obj.Type.ToString().ToLower()}");
+            }
+
+            Console.Write("searching for usages...");
+            sw = Stopwatch.StartNew();
+
+            var result = FindUsages(objects);
+
+            sw.Stop();
             Console.WriteLine($" done {sw.Elapsed}");
-            Console.ResetColor();
 
             Console.Write("vizualizing...");
             sw = Stopwatch.StartNew();
@@ -98,8 +113,8 @@ namespace DbDependencyBuilder
             string treeFile = visualizer.BuildTree();
             string graphFile = visualizer.BuildGraph();
 
+            sw.Stop();
             Console.WriteLine($" done {sw.Elapsed}");
-            Console.ResetColor();
             Console.WriteLine();
             Console.WriteLine($"tree: {treeFile}");
             Console.WriteLine($"graph: {graphFile}");
