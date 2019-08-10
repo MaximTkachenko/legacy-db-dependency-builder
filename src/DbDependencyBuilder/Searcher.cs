@@ -142,7 +142,7 @@ namespace DbDependencyBuilder
             return result.GroupBy(x => new { x.Name, x.Type, x.Db }).Select(group => group.First()).ToList();
         }
 
-        public List<RefObject> FindRoots(string[] names, RefObjectType[] types)
+        public List<RefObject> FindRoots(string[] names, RefObjectType[] types, bool exactMatch)
         {
             var result = new List<RefObject>();
             if (_dbSearch)
@@ -158,8 +158,10 @@ namespace DbDependencyBuilder
 
                         foreach (var name in names)
                         {
-                            result.AddRange(scripts.Where(x => x.Name.Contains(name, StringComparison.InvariantCultureIgnoreCase))
-                                .Select(x => new RefObject { Db = db.Key, Type = t, Name = x.Name }));
+                            var found = exactMatch
+                                ? scripts.Where(x => x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
+                                : scripts.Where(x => x.Name.Contains(name, StringComparison.InvariantCultureIgnoreCase));
+                            result.AddRange(found.Select(x => new RefObject { Db = db.Key, Type = t, Name = x.Name }));
                         }
                     }
                 }

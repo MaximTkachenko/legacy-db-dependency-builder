@@ -8,15 +8,25 @@ namespace DbDependencyBuilder
 {
     public class Visualizer
     {
+        private static readonly string Invalid = new string (Path.GetInvalidFileNameChars()) + new string (Path.GetInvalidPathChars());
+
         private readonly long _ts;
         private readonly (List<RefObject> Objects, int MaxChildren, int Nesting) _data;
         private readonly string _output;
+        private readonly string _title;
 
-        public Visualizer((List<RefObject> Objects, int MaxChildren, int Nesting) data, string output)
+        public Visualizer((List<RefObject> Objects, int MaxChildren, int Nesting) data, string output, IEnumerable<string> names)
         {
             _ts = (long) (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             _data = data;
             _output = output;
+            _title = string.Join('_', names);
+            foreach (char c in Invalid)
+            {
+                _title = _title.Replace(c.ToString(), "");
+            }
+
+            _title = _title.Replace(" ", "_");
         }
 
         public string BuildTree()
@@ -25,15 +35,14 @@ namespace DbDependencyBuilder
             var width = _data.Nesting * 400;
 
             var tree = new[] { new RefObject { Usages = _data.Objects } };
-            var tables = GetTitle(_data.Objects);
 
             var markup = File.ReadAllText(Path.Combine(_output, "templates", "tree.html"))
-                .Replace("%title%", tables)
+                .Replace("%title%", _title)
                 .Replace("%data%", JsonConvert.SerializeObject(tree))
                 .Replace("%height%", height.ToString())
                 .Replace("%width%", width.ToString());
 
-            var file = Path.Combine(GetFileName("tree", tables));
+            var file = Path.Combine(GetFileName("tree", _title));
             File.WriteAllText(file, markup);
             return file;
         }
@@ -64,20 +73,17 @@ namespace DbDependencyBuilder
                 Nodes = nodes.GroupBy(customer => customer.Id.ToUpper()).Select(group => group.First()).ToList(),
                 Links = links
             };
-            var tables = GetTitle(_data.Objects);
 
             var markup = File.ReadAllText(Path.Combine(_output, "templates", "graph.html"))
-                .Replace("%title%", tables)
+                .Replace("%title%", _title)
                 .Replace("%data%", JsonConvert.SerializeObject(graph))
                 .Replace("%height%", height.ToString())
                 .Replace("%width%", width.ToString());
 
-            var file = Path.Combine(GetFileName("graph", tables));
+            var file = Path.Combine(GetFileName("graph", _title));
             File.WriteAllText(file, markup);
             return file;
         }
-
-        static string GetTitle(List<RefObject> objects) => string.Join(',', objects.Select(x => x.Name));
 
         private string GetFileName(string type, string title)
         {

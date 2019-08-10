@@ -17,15 +17,15 @@ namespace DbDependencyBuilder
         [Option('n', "names", Separator = ',', Required = true, HelpText = " Comma separated root sql objects. Provide fragment of name or full name.")]
         public IEnumerable<string> Names { get; set; }
 
-        [Option('t', "types", Separator = ',', Required = false, HelpText = "Whitelist filter for sql object type of root. Possible values: tbl (table), syn (synonym), sp (stored procedure), fun (function), v (view).")]
+        [Option('t', "types", Separator = ',', Required = false, HelpText = "Whitelist filter for sql object type of root. Possible values: Tbl (table), syn (synonym), Sp (stored procedure), Fun (function), V (view).")]
         public IEnumerable<RefObjectType> TypesToSearch { get; set; } 
             = new [] { RefObjectType.Tbl, RefObjectType.Syn, RefObjectType.Sp, RefObjectType.Fun, RefObjectType.V };
 
         [Option('o', "output", Required = true, HelpText = "Directory for output files.")]
         public string OutputPath { get; set; }
 
-        //todo
-        public bool ExactNameCoincidence { get; set; }
+        [Option('e', "exact", Required = false, HelpText = "1 means 'equals', 0 means 'contains'")]
+        public byte ExactMatch { get; set; } = 1;
     }
 
     class Program
@@ -36,9 +36,9 @@ namespace DbDependencyBuilder
         {
             //Process(new Options
             //{
-            //    Names = new []{ "Person" },
+            //    Names = new[] { "Person" },
             //    OutputPath = @"C:\code\repos\legacy-db-dependency-builder\src\DbDependencyBuilder\bin\Debug\netcoreapp2.2",
-            //    TypesToSearch = new []{ RefObjectType.Tbl}
+            //    TypesToSearch = new[] { RefObjectType.Tbl }
             //}, new SearchConfig
             //{
             //    DbPath = new Dictionary<string, string>
@@ -83,7 +83,7 @@ namespace DbDependencyBuilder
             Console.Write("searching for roots...");
             sw = Stopwatch.StartNew();
 
-            var objects = _searcher.FindRoots(options.Names.ToArray(), options.TypesToSearch.ToArray());
+            var objects = _searcher.FindRoots(options.Names.ToArray(), options.TypesToSearch.ToArray(), options.ExactMatch > 0);
 
             if (objects.Count == 0)
             {
@@ -109,7 +109,7 @@ namespace DbDependencyBuilder
             Console.Write("vizualizing...");
             sw = Stopwatch.StartNew();
 
-            var visualizer = new Visualizer(result, options.OutputPath);
+            var visualizer = new Visualizer(result, options.OutputPath, options.Names);
             string treeFile = visualizer.BuildTree();
             string graphFile = visualizer.BuildGraph();
 
