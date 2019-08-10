@@ -17,14 +17,13 @@ namespace DbDependencyBuilder
         [Option('n', "names", Separator = ',', Required = true, HelpText = " Comma separated root sql objects. Provide fragment of name or full name.")]
         public IEnumerable<string> Names { get; set; }
 
-        [Option('t', "types", Separator = ',', Required = false, HelpText = "Filter for sql object type of root. Possible values: Tbl (table), syn (synonym), Sp (stored procedure), Fun (function), V (view).")]
-        public IEnumerable<RefObjectType> TypesToSearch { get; set; } 
-            = new [] { RefObjectType.Tbl, RefObjectType.Syn, RefObjectType.Sp, RefObjectType.Fun, RefObjectType.V };
+        [Option('t', "types", Separator = ',', Required = false, HelpText = "Filter for sql object type of root. Possible values: Tbl (table), Syn (synonym), Sp (stored procedure), Fun (function), V (view). All types by default.")]
+        public IEnumerable<RefObjectType> TypesToSearch { get; set; }
 
         [Option('o', "output", Required = true, HelpText = "Directory for output files.")]
         public string OutputPath { get; set; }
 
-        [Option('e', "exact", Required = false, HelpText = "1 means 'equals', 0 means 'contains'")]
+        [Option('e', "exact", Required = false, HelpText = "Define how to search for roots. 1 means 'equals', 0 means 'contains'")]
         public byte ExactMatch { get; set; } = 1;
     }
 
@@ -52,6 +51,14 @@ namespace DbDependencyBuilder
             Parser.Default.ParseArguments<Options>(args)
                 .WithParsed(options =>
                 {
+                    if (options.TypesToSearch == null || !options.TypesToSearch.Any())
+                    {
+                        options.TypesToSearch = new[]
+                        {
+                            RefObjectType.Tbl, RefObjectType.Syn, RefObjectType.Sp, RefObjectType.Fun, RefObjectType.V
+                        };
+                    }
+
                     if (!File.Exists(options.ConfigPath))
                     {
                         Console.WriteLine("Invalid path for json configuration file.");
