@@ -33,7 +33,7 @@ namespace DbDependencyBuilder
         public string BuildTree()
         {
             var height = _data.MaxChildren * 100;
-            var width = _data.Nesting * 400;
+            var width = _data.Nesting * 600;
 
             var tree = new[] { new RefObject { Usages = _data.Objects } };
 

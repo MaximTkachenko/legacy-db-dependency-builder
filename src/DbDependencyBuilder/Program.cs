@@ -42,7 +42,7 @@ namespace DbDependencyBuilder
             //{
             //    DbPath = new Dictionary<string, string>
             //    {
-            //        {"main", @"C:\code\repos\legacy-db-dependency-builder\sample\sample-db\dbo" }
+            //        {"main", @"C:\code\repos\legacy-db-dependency-builder\sample\sample-db" }
             //    },
             //    CsharpPath = @"C:\code\repos\legacy-db-dependency-builder\sample\sample-app"
             //});

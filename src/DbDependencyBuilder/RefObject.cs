@@ -3,6 +3,7 @@ using Newtonsoft.Json;
 
 namespace DbDependencyBuilder
 {
+    //todo refactor
     public class RefObject
     {
         private const string Root = "root";
@@ -13,6 +14,9 @@ namespace DbDependencyBuilder
         [JsonIgnore]
         public RefObjectType Type { get; set; }
 
+        [JsonIgnore]
+        public string DbSchema { get; set; }
+        
         [JsonIgnore]
         public string Name { get; set; } = Root;
 

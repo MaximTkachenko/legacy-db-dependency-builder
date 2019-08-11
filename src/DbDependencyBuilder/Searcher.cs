@@ -9,18 +9,14 @@ namespace DbDependencyBuilder
 {
     public class Searcher
     {
-        private static readonly Dictionary<RefObjectType, string> RefObjectNames;
-
-        static Searcher()
+        private static readonly Dictionary<RefObjectType, string> DbObjects = new Dictionary<RefObjectType, string>
         {
-            RefObjectNames = new Dictionary<RefObjectType, string>();
-            foreach (RefObjectType t in Enum.GetValues(typeof(RefObjectType)))
-            {
-                var memInfo = typeof(RefObjectType).GetMember(t.ToString());
-                var attributes = memInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
-                RefObjectNames[t] = ((DescriptionAttribute) attributes[0]).Description;
-            }
-        }
+            { RefObjectType.Tbl, GetDescription(RefObjectType.Tbl) },
+            { RefObjectType.Syn, GetDescription(RefObjectType.Syn) },
+            { RefObjectType.Sp, GetDescription(RefObjectType.Sp) },
+            { RefObjectType.Fun, GetDescription(RefObjectType.Fun) },
+            { RefObjectType.V, GetDescription(RefObjectType.V) }
+        };
 
         private static readonly Dictionary<RefObjectType, RefObjectType[]> SqlSearchRules =
             new Dictionary<RefObjectType, RefObjectType[]>
@@ -32,7 +28,7 @@ namespace DbDependencyBuilder
                 { RefObjectType.V, new [] { RefObjectType.Syn, RefObjectType.Sp, RefObjectType.Fun, RefObjectType.V } }
             };
 
-        private readonly Dictionary<string, Dictionary<RefObjectType, List<(string Name, string Script)>>> _sql;
+        private readonly Dictionary<string, Dictionary<RefObjectType, List<(string Name, string Schema, string Script)>>> _sql;
         private readonly Dictionary<string, string> _etl;
         private readonly Dictionary<string, Dictionary<string, string>> _csharp;
 
@@ -48,20 +44,37 @@ namespace DbDependencyBuilder
 
             if (_dbSearch)
             {
-                _sql = new Dictionary<string, Dictionary<RefObjectType, List<(string Name, string Script)>>>();
+                _sql = new Dictionary<string, Dictionary<RefObjectType, List<(string Name, string Schema, string Script)>>>();
                 foreach (var root in config.DbPath)
                 {
-                    _sql[root.Key] = new Dictionary<RefObjectType, List<(string Name, string Script)>>();
-                    foreach (RefObjectType t in Enum.GetValues(typeof(RefObjectType)))
-                    {
-                        var folder = $@"{root.Value}\{RefObjectNames[t]}";
-                        if (!Directory.Exists(folder))
-                        {
-                            continue;
-                        }
+                    _sql[root.Key] = new Dictionary<RefObjectType, List<(string Name, string Schema, string Script)>>();
 
-                        _sql[root.Key][t] = Directory.GetFiles(folder, "*.sql")
-                            .Select(x => (Path.GetFileNameWithoutExtension(x), File.ReadAllText(x))).ToList();
+                    //var sc = Directory.GetDirectories(root.Value);
+                    //var d = Directory.GetDirectories(sc[2]);
+                    //var gg = Path.GetFileName(d[0]);
+                    //var n = d.Where(f => DbObjects.Values.Contains(Path.GetDirectoryName(f))).ToArray();
+
+                    var schemas = Directory.GetDirectories(root.Value)
+                        .Where(s => Directory.GetDirectories(s).Any(f => DbObjects.Values.Contains(Path.GetFileName(f))));
+
+                    foreach (var schema in schemas)
+                    {
+                        foreach (var pair in DbObjects)
+                        {
+                            var folder = $@"{schema}\{pair.Value}";
+                            if (!Directory.Exists(folder))
+                            {
+                                continue;
+                            }
+
+                            if (!_sql[root.Key].ContainsKey(pair.Key))
+                            {
+                                _sql[root.Key][pair.Key] = new List<(string Name, string Schema, string Script)>();
+                            }
+
+                            _sql[root.Key][pair.Key].AddRange(Directory.GetFiles(folder, "*.sql")
+                                .Select(x => (Path.GetFileNameWithoutExtension(x), Path.GetDirectoryName(schema), File.ReadAllText(x))));
+                        }
                     }
                 }
             }
@@ -110,6 +123,8 @@ namespace DbDependencyBuilder
                                           t == obj.Type && db.Key.Equals(obj.Db)))
                             .Where(x => sqlRegex.IsMatch(x.Script))
                             .Select(x => new RefObject {Db = db.Key, Type = t, Name = x.Name}));
+
+                        var d = scripts.Where(x => sqlRegex.IsMatch(x.Script)).ToArray();
                     }
                 }
             }
@@ -123,18 +138,14 @@ namespace DbDependencyBuilder
 
                 if (_csharpSearch)
                 {
-                    var csharpMapRegex = $"\"{obj.Name}\""; //table mapping or exec sp without parameters
-                    var csharpExecRegex1 = $"exec {obj.Name}"; //exec sp
-                    var csharpExecRegex2 = $"\"{obj.Name} "; //exec sp with parameters
-                    var csharpFromRegex = $"from {obj.Name}"; //select from table
-                    foreach (var sln in _csharp)
+                    var condition = GetCsharpSearchCondition(obj);
+                    if (condition != null)
                     {
-                        result.AddRange(sln.Value.Where(x =>
-                                x.Value.Contains(csharpMapRegex, StringComparison.InvariantCultureIgnoreCase)
-                                || x.Value.Contains(csharpExecRegex1, StringComparison.InvariantCultureIgnoreCase)
-                                || x.Value.Contains(csharpExecRegex2, StringComparison.InvariantCultureIgnoreCase)
-                                || x.Value.Contains(csharpFromRegex, StringComparison.InvariantCultureIgnoreCase))
-                            .Select(x => new RefObject {Type = RefObjectType.Cs, Name = Path.GetFileName(x.Key)}));
+                        foreach (var sln in _csharp)
+                        {
+                            result.AddRange(sln.Value.Where(condition)
+                                .Select(x => new RefObject { Type = RefObjectType.Cs, Name = Path.GetFileName(x.Key) }));
+                        }
                     }
                 }
             }
@@ -161,13 +172,63 @@ namespace DbDependencyBuilder
                             var found = exactMatch
                                 ? scripts.Where(x => x.Name.Equals(name, StringComparison.InvariantCultureIgnoreCase))
                                 : scripts.Where(x => x.Name.Contains(name, StringComparison.InvariantCultureIgnoreCase));
-                            result.AddRange(found.Select(x => new RefObject { Db = db.Key, Type = t, Name = x.Name }));
+                            result.AddRange(found.Select(x => new RefObject { Db = db.Key, Type = t, Name = x.Name, DbSchema = x.Schema}));
                         }
                     }
                 }
             }
 
             return result;
+        }
+
+        private static Func<KeyValuePair<string, string>, bool> GetCsharpSearchCondition(RefObject obj)
+        {
+            if (obj.Type == RefObjectType.Tbl)
+            {
+                var tablePattern1 = $"\"{obj.Name}\"";
+                var tablePattern2 = $"\"{obj.DbSchema}.{obj.Name}\"";
+                var tablePattern3 = $"from {obj.Name}";
+                var tablePattern4 = $"from {obj.DbSchema}.{obj.Name}";
+                var tablePattern5 = $"join {obj.Name}";
+                var tablePattern6 = $"join {obj.DbSchema}.{obj.Name}";
+                Func<KeyValuePair<string, string>, bool> tableCondition = x =>
+                    x.Value.Contains(tablePattern1, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(tablePattern2, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(tablePattern3, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(tablePattern4, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(tablePattern5, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(tablePattern6, StringComparison.InvariantCultureIgnoreCase);
+
+                return tableCondition;
+            }
+
+            if (obj.Type == RefObjectType.Sp)
+            {
+                var spPattern1 = $"\"{obj.Name}\"";
+                var spPattern2 = $"\"{obj.DbSchema}.{obj.Name}\"";
+                var spPattern3 = $"exec {obj.Name}\"";
+                var spPattern4 = $"exec {obj.DbSchema}.{obj.Name}\"";
+                var spPattern5 = $"exec {obj.Name} ";
+                var spPattern6 = $"exec {obj.DbSchema}.{obj.Name} ";
+                Func<KeyValuePair<string, string>, bool> spCondition = x =>
+                    x.Value.Contains(spPattern1, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(spPattern2, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(spPattern3, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(spPattern4, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(spPattern5, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(spPattern6, StringComparison.InvariantCultureIgnoreCase);
+
+                return spCondition;
+            }
+
+            return null;
+        }
+
+        private static string GetDescription<T>(T item)
+        {
+            var memInfo = typeof(RefObjectType).GetMember(item.ToString());
+            var attributes = memInfo[0].GetCustomAttributes(typeof(DescriptionAttribute), false);
+            return ((DescriptionAttribute)attributes[0]).Description;
         }
     }
 }

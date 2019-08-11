@@ -9,3 +9,16 @@ dotnet DbDependencyBuilder.dll -c C:\code\repos\legacy-db-dependency-builder\sam
 ```
 
 Build dependency map for particular SQL objects (tables etc.). It's useful especially in case of legacy databases with a lot of nested views, synonyms and compelx stored procedures.
+
+1. [import](https://docs.microsoft.com/en-us/sql/ssdt/import-into-a-database-project?view=sql-server-2017) database schema to sql project
+2. prepare json config in format:
+```
+
+```
+	- db
+	- csharp
+	- etl
+3. install depdbbuilder as a global and run
+```
+depdbbuilder --cconfig C:\pathto\search-config.json --names Person --types Tbl --output C:\output
+```
