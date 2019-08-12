@@ -18,7 +18,7 @@ Build dependency map for particular SQL objects (tables etc.). It's useful espec
 		"sql-database-key": "path-to-sql-database-project"
 	},
 	"etl": "path-to-folder-with-dtsx-files",
-	"csharp": "path-to-csharp-solution"
+	"csharp": "path-to-folder-with-csharp-code"
 }
 ```
 3. run
