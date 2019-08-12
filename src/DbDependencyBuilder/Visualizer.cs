@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using Newtonsoft.Json;
 
 namespace DbDependencyBuilder
@@ -14,9 +15,11 @@ namespace DbDependencyBuilder
         private readonly (List<RefObject> Objects, int MaxChildren, int Nesting) _data;
         private readonly string _output;
         private readonly string _title;
+        private readonly string _currentDirectory;
 
         public Visualizer((List<RefObject> Objects, int MaxChildren, int Nesting) data, string output, IEnumerable<string> names)
         {
+            _currentDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             _ts = (long) (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalSeconds;
             _data = data;
             _output = output;
@@ -37,7 +40,7 @@ namespace DbDependencyBuilder
 
             var tree = new[] { new RefObject { Usages = _data.Objects } };
 
-            var markup = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "templates", "tree.html"))
+            var markup = File.ReadAllText(Path.Combine(_currentDirectory, "templates", "tree.html"))
                 .Replace("%title%", _title)
                 .Replace("%data%", JsonConvert.SerializeObject(tree))
                 .Replace("%height%", height.ToString())
@@ -75,7 +78,7 @@ namespace DbDependencyBuilder
                 Links = links
             };
 
-            var markup = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "templates", "graph.html"))
+            var markup = File.ReadAllText(Path.Combine(_currentDirectory, "templates", "graph.html"))
                 .Replace("%title%", _title)
                 .Replace("%data%", JsonConvert.SerializeObject(graph))
                 .Replace("%height%", height.ToString())

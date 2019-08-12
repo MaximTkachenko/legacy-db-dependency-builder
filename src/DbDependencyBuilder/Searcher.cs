@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
@@ -32,12 +33,16 @@ namespace DbDependencyBuilder
         private readonly Dictionary<string, string> _etl;
         private readonly Dictionary<string, Dictionary<string, string>> _csharp;
 
+        private readonly ConcurrentDictionary<string, List<RefObject>> _cache;
+
         private readonly bool _dbSearch;
         private readonly bool _etlSearch;
         private readonly bool _csharpSearch;
 
         public Searcher(SearchConfig config)
         {
+            _cache = new ConcurrentDictionary<string, List<RefObject>>();
+
             _dbSearch = config.DbPath != null && config.DbPath.Keys.Count > 0;
             _etlSearch = !string.IsNullOrEmpty(config.EtlPath);
             _csharpSearch = !string.IsNullOrEmpty(config.CsharpPath);
@@ -95,7 +100,13 @@ namespace DbDependencyBuilder
 
         public List<RefObject> FindUsages(RefObject obj)
         {
-            var result = new List<RefObject>();
+            var key = $"{obj.DbSchema}.{obj.Name}".ToLower();
+            if (_cache.TryGetValue(key, out var result))
+            {
+                return result;
+            }
+
+            result = new List<RefObject>();
             var sqlRegex = new Regex($@"[^a-zA-Z0-9]{{1}}{obj.Name}[^a-zA-Z0-9]{{1}}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
             if (_dbSearch)
@@ -144,7 +155,9 @@ namespace DbDependencyBuilder
                 }
             }
 
-            return result.GroupBy(x => new { x.Name, x.Type, x.Db }).Select(group => group.First()).ToList();
+            result = result.GroupBy(x => new { x.Name, x.Type, x.Db }).Select(group => group.First()).ToList();
+            _cache.TryAdd(key, result);
+            return result;
         }
 
         public List<RefObject> FindRoots(string[] names, RefObjectType[] types, bool exactMatch)
