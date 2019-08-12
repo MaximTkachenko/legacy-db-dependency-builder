@@ -49,14 +49,15 @@ namespace DbDependencyBuilder
                 {
                     _sql[root.Key] = new Dictionary<RefObjectType, List<(string Name, string Schema, string Script)>>();
 
-                    var schemas = Directory.GetDirectories(root.Value)
+                    var schemaFolders = Directory.GetDirectories(root.Value)
                         .Where(s => Directory.GetDirectories(s).Any(f => DbObjects.Values.Contains(Path.GetFileName(f))));
 
-                    foreach (var schema in schemas)
+                    foreach (var schemaFolder in schemaFolders)
                     {
+                        var schema = Path.GetFileName(schemaFolder);
                         foreach (var pair in DbObjects)
                         {
-                            var folder = $@"{schema}\{pair.Value}";
+                            var folder = Path.Combine(schemaFolder, pair.Value);
                             if (!Directory.Exists(folder))
                             {
                                 continue;
@@ -68,7 +69,7 @@ namespace DbDependencyBuilder
                             }
 
                             _sql[root.Key][pair.Key].AddRange(Directory.GetFiles(folder, "*.sql")
-                                .Select(x => (Path.GetFileNameWithoutExtension(x), Path.GetFileName(schema), File.ReadAllText(x))));
+                                .Select(x => (Path.GetFileNameWithoutExtension(x), schema, File.ReadAllText(x))));
                         }
                     }
                 }
