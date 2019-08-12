@@ -105,7 +105,7 @@ namespace DbDependencyBuilder
                 Console.WriteLine($"- {obj.Db}.{obj.Name} {obj.Type.ToString().ToLower()}");
             }
 
-            Console.Write("searching for usages...");
+            Console.WriteLine("searching for usages...");
             sw = Stopwatch.StartNew();
 
             var result = FindUsages(objects);
@@ -135,6 +135,7 @@ namespace DbDependencyBuilder
             while (toCheck.Count > 0)
             {
                 toCheck = FindUsagesIml(toCheck);
+                Console.WriteLine($"{toCheck.Count} references found");
 
                 if (toCheck.Count > maxChildren)
                 {

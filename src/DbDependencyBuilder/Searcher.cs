@@ -100,6 +100,11 @@ namespace DbDependencyBuilder
 
         public List<RefObject> FindUsages(RefObject obj)
         {
+            if(!DbObjects.TryGetValue(obj.Type, out _))
+            {
+                return new List<RefObject>();
+            }
+
             var key = $"{obj.DbSchema}.{obj.Name}".ToLower();
             if (_cache.TryGetValue(key, out var result))
             {
@@ -107,7 +112,7 @@ namespace DbDependencyBuilder
             }
 
             result = new List<RefObject>();
-            var sqlRegex = new Regex($@"[^a-zA-Z0-9]{{1}}{obj.Name}[^a-zA-Z0-9]{{1}}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            var sqlRegex = new Regex($@"[^a-zA-Z0-9_-]{{1}}{obj.Name}[^a-zA-Z0-9_-]{{1}}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
             if (_dbSearch)
             {
@@ -134,25 +139,22 @@ namespace DbDependencyBuilder
                 }
             }
 
-            if (obj.Type != RefObjectType.Cs || obj.Type != RefObjectType.Etl)
+            if (_csharpSearch)
             {
-                if (_etlSearch)
+                var condition = GetCsharpSearchCondition(obj);
+                if (condition != null)
                 {
-                    result.AddRange(_etl.Where(x => sqlRegex.IsMatch(x.Value)).Select(x => new RefObject {Type = RefObjectType.Etl, Name = x.Key}));
-                }
-
-                if (_csharpSearch)
-                {
-                    var condition = GetCsharpSearchCondition(obj);
-                    if (condition != null)
+                    foreach (var sln in _csharp)
                     {
-                        foreach (var sln in _csharp)
-                        {
-                            result.AddRange(sln.Value.Where(condition)
-                                .Select(x => new RefObject { Type = RefObjectType.Cs, Name = Path.GetFileName(x.Key) }));
-                        }
+                        result.AddRange(sln.Value.Where(condition)
+                            .Select(x => new RefObject { Type = RefObjectType.Cs, Name = Path.GetFileName(x.Key) }));
                     }
                 }
+            }
+
+            if (_etlSearch)
+            {
+                result.AddRange(_etl.Where(x => sqlRegex.IsMatch(x.Value)).Select(x => new RefObject { Type = RefObjectType.Etl, Name = x.Key }));
             }
 
             result = result.GroupBy(x => new { x.Name, x.Type, x.Db }).Select(group => group.First()).ToList();
