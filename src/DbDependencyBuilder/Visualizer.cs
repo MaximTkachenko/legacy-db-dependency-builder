@@ -37,7 +37,7 @@ namespace DbDependencyBuilder
 
             var tree = new[] { new RefObject { Usages = _data.Objects } };
 
-            var markup = File.ReadAllText(Path.Combine(_output, "templates", "tree.html"))
+            var markup = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "templates", "tree.html"))
                 .Replace("%title%", _title)
                 .Replace("%data%", JsonConvert.SerializeObject(tree))
                 .Replace("%height%", height.ToString())
@@ -75,7 +75,7 @@ namespace DbDependencyBuilder
                 Links = links
             };
 
-            var markup = File.ReadAllText(Path.Combine(_output, "templates", "graph.html"))
+            var markup = File.ReadAllText(Path.Combine(Directory.GetCurrentDirectory(), "templates", "graph.html"))
                 .Replace("%title%", _title)
                 .Replace("%data%", JsonConvert.SerializeObject(graph))
                 .Replace("%height%", height.ToString())
@@ -90,7 +90,7 @@ namespace DbDependencyBuilder
         {
             var filename = $"{_ts}_{type}_{title}";
             filename = filename.Length > 40 ? filename.Substring(0, 40) : filename;
-            return Path.Combine(Directory.GetCurrentDirectory(), $"{filename}.html");
+            return Path.Combine(_output, $"{filename}.html");
         }
 
         private sealed class GraphData

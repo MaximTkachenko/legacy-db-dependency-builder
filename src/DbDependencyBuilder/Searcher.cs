@@ -49,11 +49,6 @@ namespace DbDependencyBuilder
                 {
                     _sql[root.Key] = new Dictionary<RefObjectType, List<(string Name, string Schema, string Script)>>();
 
-                    //var sc = Directory.GetDirectories(root.Value);
-                    //var d = Directory.GetDirectories(sc[2]);
-                    //var gg = Path.GetFileName(d[0]);
-                    //var n = d.Where(f => DbObjects.Values.Contains(Path.GetDirectoryName(f))).ToArray();
-
                     var schemas = Directory.GetDirectories(root.Value)
                         .Where(s => Directory.GetDirectories(s).Any(f => DbObjects.Values.Contains(Path.GetFileName(f))));
 
@@ -183,7 +178,7 @@ namespace DbDependencyBuilder
 
         private static Func<KeyValuePair<string, string>, bool> GetCsharpSearchCondition(RefObject obj)
         {
-            if (obj.Type == RefObjectType.Tbl)
+            if (obj.Type == RefObjectType.Tbl || obj.Type == RefObjectType.V)
             {
                 var tablePattern1 = $"\"{obj.Name}\"";
                 var tablePattern2 = $"\"{obj.DbSchema}.{obj.Name}\"";
@@ -206,17 +201,21 @@ namespace DbDependencyBuilder
             {
                 var spPattern1 = $"\"{obj.Name}\"";
                 var spPattern2 = $"\"{obj.DbSchema}.{obj.Name}\"";
-                var spPattern3 = $"exec {obj.Name}\"";
-                var spPattern4 = $"exec {obj.DbSchema}.{obj.Name}\"";
-                var spPattern5 = $"exec {obj.Name} ";
-                var spPattern6 = $"exec {obj.DbSchema}.{obj.Name} ";
+                var spPattern3 = $"\"{obj.Name} ";
+                var spPattern4 = $"\"{obj.DbSchema}.{obj.Name} ";
+                var spPattern5 = $"exec {obj.Name}\"";
+                var spPattern6 = $"exec {obj.DbSchema}.{obj.Name}\"";
+                var spPattern7 = $"exec {obj.Name} ";
+                var spPattern8 = $"exec {obj.DbSchema}.{obj.Name} ";
                 Func<KeyValuePair<string, string>, bool> spCondition = x =>
                     x.Value.Contains(spPattern1, StringComparison.InvariantCultureIgnoreCase)
                     || x.Value.Contains(spPattern2, StringComparison.InvariantCultureIgnoreCase)
                     || x.Value.Contains(spPattern3, StringComparison.InvariantCultureIgnoreCase)
                     || x.Value.Contains(spPattern4, StringComparison.InvariantCultureIgnoreCase)
                     || x.Value.Contains(spPattern5, StringComparison.InvariantCultureIgnoreCase)
-                    || x.Value.Contains(spPattern6, StringComparison.InvariantCultureIgnoreCase);
+                    || x.Value.Contains(spPattern6, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(spPattern7, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(spPattern8, StringComparison.InvariantCultureIgnoreCase);
 
                 return spCondition;
             }
