@@ -1,9 +1,23 @@
 [![Build Status](https://dev.azure.com/mtkorg/oss-projects/_apis/build/status/MaximTkachenko.legacy-db-dependency-builder?branchName=master)](https://dev.azure.com/mtkorg/oss-projects/_build/latest?definitionId=4&branchName=master)
 
 # legacy-db-dependency-builder
+```
+-c, --config    Required. Path to json configuration file.
+
+-n, --names     Required.  Comma separated root sql objects. Provide fragment of name or full name.
+
+-t, --types     Filter for sql object type of root. Possible values: Tbl (table), Syn (synonym), Sp (stored procedure), Fun (function), V (view). All types by default.
+
+-o, --output    Required. Directory for output files.
+
+-e, --exact     Define how to search for roots. 1 means 'equals', 0 means 'contains'
+
+--help          Display this help screen.
+
+--version       Display version information.
+```
 
 ```
-dotnet DbDependencyBuilder.dll --help
 dotnet DbDependencyBuilder.dll -c C:\code\repos\legacy-db-dependency-builder\sample\search-config.json -n Person -t Tbl -o C:\code\repos\legacy-db-dependency-builder\src\DbDependencyBuilder\bin\Debug\netcoreapp2.2
 dotnet DbDependencyBuilder.dll -c C:\code\repos\legacy-db-dependency-builder\sample\search-config.json -n Person -t Tbl,Sp,V -o C:\code\repos\legacy-db-dependency-builder\src\DbDependencyBuilder\bin\Debug\netcoreapp2.2 -e 0
 ```
