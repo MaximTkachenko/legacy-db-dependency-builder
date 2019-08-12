@@ -11,7 +11,7 @@ dotnet DbDependencyBuilder.dll -c C:\code\repos\legacy-db-dependency-builder\sam
 Build dependency map for particular SQL objects (tables etc.). It's useful especially in case of legacy databases with a lot of nested views, synonyms and compelx stored procedures.
 
 1. [import](https://docs.microsoft.com/en-us/sql/ssdt/import-into-a-database-project?view=sql-server-2017) database schema to sql project
-2. prepare json config in format ([sampel](https://github.com/MaximTkachenko/legacy-db-dependency-builder/blob/master/sample/search-config.json)):
+2. prepare json config in format ([sample](https://github.com/MaximTkachenko/legacy-db-dependency-builder/blob/master/sample/search-config.json)):
 ```
 {
 	"db": {
@@ -21,7 +21,8 @@ Build dependency map for particular SQL objects (tables etc.). It's useful espec
 	"csharp": "path-to-csharp-solution"
 }
 ```
-3. install depdbbuilder as a global and run
+3. run
 ```
-dep-db-builder --cconfig C:\pathto\search-config.json --names Person --types Tbl --output C:\output
+dotnet DbDependencyBuilder.dll --config C:\pathto\search-config.json --names Person --types Tbl --output C:\output
 ```
+4. check generated files: tree ([source](https://github.com/MaximTkachenko/legacy-db-dependency-builder/blob/master/sample/sample-output/1565599401_tree_Person.html), [preview](https://rawcdn.githack.com/MaximTkachenko/legacy-db-dependency-builder/59965a0302e11889bf317ed0e481d3f632296d7e/sample/sample-output/1565599401_tree_Person.html)) and graph ([source](https://github.com/MaximTkachenko/legacy-db-dependency-builder/blob/master/sample/sample-output/1565599401_graph_Person.html), [preview](https://rawcdn.githack.com/MaximTkachenko/legacy-db-dependency-builder/7289811f4b9430db5dcca0f1825264c1ea809cbf/sample/sample-output/1565599401_graph_Person.html)).
