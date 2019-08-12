@@ -23,7 +23,7 @@ namespace DbDependencyBuilder
         [Option('o', "output", Required = true, HelpText = "Directory for output files.")]
         public string OutputPath { get; set; }
 
-        [Option('e', "exact", Required = false, HelpText = "Define how to search for roots. 1 means 'equals', 0 means 'contains'")]
+        [Option('e', "exact", Required = false, HelpText = "Define how to search for roots. 1 means 'equals', 0 means 'contains'. 'Equals' by default.")]
         public byte ExactMatch { get; set; } = 1;
     }
 
