@@ -10,11 +10,9 @@
 
 -o, --output    Required. Directory for output files.
 
--e, --exact     Define how to search for roots. 1 means 'equals', 0 means 'contains'
+-e, --exact     Define how to search for roots. 1 means 'equals', 0 means 'contains'. 'Equals' by default.
 
 --help          Display this help screen.
-
---version       Display version information.
 ```
 
 ```
