@@ -23,7 +23,9 @@ Build dependency map for particular SQL objects (tables etc.). It's useful espec
 ```
 {
 	"db": {
-		"sql-database-key": "path-to-sql-database-project"
+		"sql-database-key-1": "path-to-sql-database-project-1",
+		...
+		"sql-database-key-n": "path-to-sql-database-project-n"
 	},
 	"etl": "path-to-folder-with-dtsx-files",
 	"csharp": "path-to-folder-with-csharp-code"
