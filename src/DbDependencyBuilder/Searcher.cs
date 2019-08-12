@@ -68,7 +68,7 @@ namespace DbDependencyBuilder
                             }
 
                             _sql[root.Key][pair.Key].AddRange(Directory.GetFiles(folder, "*.sql")
-                                .Select(x => (Path.GetFileNameWithoutExtension(x), Path.GetDirectoryName(schema), File.ReadAllText(x))));
+                                .Select(x => (Path.GetFileNameWithoutExtension(x), Path.GetFileName(schema), File.ReadAllText(x))));
                         }
                     }
                 }
@@ -95,7 +95,7 @@ namespace DbDependencyBuilder
         public List<RefObject> FindUsages(RefObject obj)
         {
             var result = new List<RefObject>();
-            var sqlRegex = new Regex($@"[ .\t[]{{1}}{obj.Name}[ \]\t]{{1}}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+            var sqlRegex = new Regex($@"[^a-zA-Z0-9]{{1}}{obj.Name}[^a-zA-Z0-9]{{1}}", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
             if (_dbSearch)
             {
@@ -117,9 +117,7 @@ namespace DbDependencyBuilder
                             .Where(x => !(x.Name.Equals(obj.Name, StringComparison.OrdinalIgnoreCase) &&
                                           t == obj.Type && db.Key.Equals(obj.Db)))
                             .Where(x => sqlRegex.IsMatch(x.Script))
-                            .Select(x => new RefObject {Db = db.Key, Type = t, Name = x.Name}));
-
-                        var d = scripts.Where(x => sqlRegex.IsMatch(x.Script)).ToArray();
+                            .Select(x => new RefObject {Db = db.Key, Type = t, Name = x.Name, DbSchema = x.Schema}));
                     }
                 }
             }
@@ -186,13 +184,17 @@ namespace DbDependencyBuilder
                 var tablePattern4 = $"from {obj.DbSchema}.{obj.Name}";
                 var tablePattern5 = $"join {obj.Name}";
                 var tablePattern6 = $"join {obj.DbSchema}.{obj.Name}";
+                var tablePattern7 = $"into {obj.Name}";
+                var tablePattern8 = $"into {obj.DbSchema}.{obj.Name}";
                 Func<KeyValuePair<string, string>, bool> tableCondition = x =>
                     x.Value.Contains(tablePattern1, StringComparison.InvariantCultureIgnoreCase)
                     || x.Value.Contains(tablePattern2, StringComparison.InvariantCultureIgnoreCase)
                     || x.Value.Contains(tablePattern3, StringComparison.InvariantCultureIgnoreCase)
                     || x.Value.Contains(tablePattern4, StringComparison.InvariantCultureIgnoreCase)
                     || x.Value.Contains(tablePattern5, StringComparison.InvariantCultureIgnoreCase)
-                    || x.Value.Contains(tablePattern6, StringComparison.InvariantCultureIgnoreCase);
+                    || x.Value.Contains(tablePattern6, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(tablePattern7, StringComparison.InvariantCultureIgnoreCase)
+                    || x.Value.Contains(tablePattern8, StringComparison.InvariantCultureIgnoreCase);
 
                 return tableCondition;
             }

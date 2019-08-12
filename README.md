@@ -20,5 +20,5 @@ Build dependency map for particular SQL objects (tables etc.). It's useful espec
 	- etl
 3. install depdbbuilder as a global and run
 ```
-depdbbuilder --cconfig C:\pathto\search-config.json --names Person --types Tbl --output C:\output
+dep-db-builder --cconfig C:\pathto\search-config.json --names Person --types Tbl --output C:\output
 ```
