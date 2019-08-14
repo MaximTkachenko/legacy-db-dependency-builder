@@ -35,4 +35,4 @@ Build dependency map for particular SQL objects (tables etc.). It's useful espec
 ```
 dotnet DbDependencyBuilder.dll --config C:\pathto\search-config.json --names Person --types Tbl --output C:\output
 ```
-4. check generated files: [tree](https://rawcdn.githack.com/MaximTkachenko/legacy-db-dependency-builder/59965a0302e11889bf317ed0e481d3f632296d7e/sample/sample-output/1565599401_tree_Person.html) and [graph](https://rawcdn.githack.com/MaximTkachenko/legacy-db-dependency-builder/7289811f4b9430db5dcca0f1825264c1ea809cbf/sample/sample-output/1565599401_graph_Person.html).
+4. check generated files: [tree](https://rawcdn.githack.com/MaximTkachenko/legacy-db-dependency-builder/59965a0302e11889bf317ed0e481d3f632296d7e/sample/sample-output/1565599401_tree_Person.html) and [graph](https://rawcdn.githack.com/MaximTkachenko/legacy-db-dependency-builder/7289811f4b9430db5dcca0f1825264c1ea809cbf/sample/sample-output/1565599401_graph_Person.html) for [sample csharp project and database](https://github.com/MaximTkachenko/legacy-db-dependency-builder/tree/master/sample).
