@@ -79,15 +79,15 @@ namespace DbDependencyBuilder
 
         static void Process(Options options, SearchConfig config)
         {
-            Console.Write("loading...");
+            Console.WriteLine("loading...");
             var sw = Stopwatch.StartNew();
 
             _searcher = new Searcher(config);
 
             sw.Stop();
-            Console.WriteLine($" done {sw.Elapsed}");
+            Console.WriteLine($"done {sw.Elapsed}");
 
-            Console.Write("searching for roots...");
+            Console.WriteLine("searching for roots...");
             sw = Stopwatch.StartNew();
 
             var objects = _searcher.FindRoots(options.Names.ToArray(), options.TypesToSearch.ToArray(), options.ExactMatch > 0);
@@ -98,12 +98,13 @@ namespace DbDependencyBuilder
                 return;
             }
 
-            sw.Stop();
-            Console.WriteLine($" done {sw.Elapsed}, found {objects.Count}:");
+            Console.WriteLine($"found {objects.Count}:");
             foreach (var obj in objects)
             {
                 Console.WriteLine($"- {obj.Db}.{obj.Name} {obj.Type.ToString().ToLower()}");
             }
+            sw.Stop();
+            Console.WriteLine($"done {sw.Elapsed}");
 
             Console.WriteLine("searching for usages...");
             sw = Stopwatch.StartNew();
@@ -111,9 +112,9 @@ namespace DbDependencyBuilder
             var result = FindUsages(objects);
 
             sw.Stop();
-            Console.WriteLine($" done {sw.Elapsed}");
+            Console.WriteLine($"done {sw.Elapsed}");
 
-            Console.Write("visualizing...");
+            Console.WriteLine("visualizing...");
             sw = Stopwatch.StartNew();
 
             var visualizer = new Visualizer(result, options.OutputPath, options.Names);
@@ -121,7 +122,7 @@ namespace DbDependencyBuilder
             string graphFile = visualizer.BuildGraph();
 
             sw.Stop();
-            Console.WriteLine($" done {sw.Elapsed}");
+            Console.WriteLine($"done {sw.Elapsed}");
             Console.WriteLine();
             Console.WriteLine($"tree: {treeFile}");
             Console.WriteLine($"graph: {graphFile}");
