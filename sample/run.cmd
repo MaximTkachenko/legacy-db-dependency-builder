@@ -1,0 +1,2 @@
+dotnet C:\code\repos\legacy-db-dependency-builder\src\DbDependencyBuilder\bin\Debug\netcoreapp2.2\DbDependencyBuilder.dll -c C:\code\repos\legacy-db-dependency-builder\sample\search-config.json -n Person -t Tbl -o C:\code\repos\legacy-db-dependency-builder\sample\sample-output
+pause
