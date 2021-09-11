@@ -2,7 +2,7 @@
 
 # legacy-db-dependency-builder
 
-Build dependency map for particular SQL objects (tables, stored procedures etc.). It's useful especially in case of legacy systems with a lot of nested views, synonyms and compelx stored procedures.
+The tool builds dependency map for particular SQL objects (tables, stored procedures etc.). It's useful especially in case of legacy systems with a lot of nested views, synonyms and compelx stored procedures.
 
 ```
 -c, --config    Required. Path to json configuration file.
