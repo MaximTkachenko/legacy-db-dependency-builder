@@ -19,7 +19,7 @@ The tool builds dependency map for particular SQL objects (tables, stored proced
 ```
 
 1. [import](https://docs.microsoft.com/en-us/sql/ssdt/import-into-a-database-project?view=sql-server-2017) database schema to sql project
-2. prepare json config in format ([sample](https://github.com/MaximTkachenko/legacy-db-dependency-builder/blob/master/sample/search-config.json)):
+2. prepare json config in the following format ([sample](https://github.com/MaximTkachenko/legacy-db-dependency-builder/blob/master/sample/search-config.json)):
 ```
 {
 	"db": {
