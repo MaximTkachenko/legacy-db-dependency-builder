@@ -1,5 +1,3 @@
-[![Build Status](https://dev.azure.com/mtkorg/oss-projects/_apis/build/status/MaximTkachenko.legacy-db-dependency-builder?branchName=master)](https://dev.azure.com/mtkorg/oss-projects/_build/latest?definitionId=4&branchName=master)
-
 # legacy-db-dependency-builder
 
 The tool builds dependency map for particular SQL objects (tables, stored procedures etc.). It's useful especially in case of legacy systems with a lot of nested views, synonyms and compelx stored procedures.
